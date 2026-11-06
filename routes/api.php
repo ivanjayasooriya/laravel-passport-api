@@ -1,13 +1,9 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\PostController;
-
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:api');
+use App\Http\Controllers\Api\Admin\UserController as AdminUserController;
 
 // Public Authentication Routes
 Route::post('/register', [AuthController::class, 'register']);
@@ -20,4 +16,9 @@ Route::middleware('auth:api')->group(function () {
 
     // Standard RESTful API Resource Routes for Posts
     Route::apiResource('posts', PostController::class);
+});
+
+// Protected Admin Routes (Requires auth:api AND admin role)
+Route::middleware(['auth:api', 'admin'])->prefix('admin')->group(function () {
+    Route::get('/users', [AdminUserController::class, 'index']);
 });
