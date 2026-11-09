@@ -7,6 +7,7 @@ use App\Repositories\PostRepositoryInterface;
 use Exception;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 
 class PostService implements PostServiceInterface
 {
@@ -43,6 +44,13 @@ class PostService implements PostServiceInterface
 
     public function updatePost(int $id, array $data): ?Post
     {
+        $post = $this->postRepository->getById($id);
+        if (!$post) {
+            return null;
+        }
+
+        Gate::authorize('update', $post);
+
         DB::beginTransaction();
         try {
             $updated = $this->postRepository->update($id, $data);
@@ -50,7 +58,6 @@ class PostService implements PostServiceInterface
                 DB::rollBack();
                 return null;
             }
-            $post = $this->postRepository->getById($id);
             DB::commit();
             return $post;
         } catch (Exception $e) {
@@ -61,6 +68,13 @@ class PostService implements PostServiceInterface
 
     public function deletePost(int $id): bool
     {
+        $post = $this->postRepository->getById($id);
+            if (!$post) {
+                return false;
+            }
+
+        Gate::authorize('delete', $post);
+        
         DB::beginTransaction();
         try {
             $deleted = $this->postRepository->delete($id);
