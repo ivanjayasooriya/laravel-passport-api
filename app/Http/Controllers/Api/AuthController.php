@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\RegisterRequest;
 use App\Http\Requests\LoginRequest;
+use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Hash;
@@ -26,7 +27,7 @@ class AuthController extends Controller
             'success' => true,
             'message' => 'User registered successfully',
             'data' => [
-                'user' => $user,
+                'user' => new UserResource($user),
                 'token' => $token,
             ]
         ], 201);
@@ -49,7 +50,7 @@ class AuthController extends Controller
             'success' => true,
             'message' => 'Logged in successfully',
             'data' => [
-                'user' => $user,
+                'user' => new UserResource($user),
                 'token' => $token,
             ]
         ]);
@@ -72,7 +73,7 @@ class AuthController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data' => Auth::user(),
+            'data' => new UserResource(Auth::user()),
         ]);
     }
 }
