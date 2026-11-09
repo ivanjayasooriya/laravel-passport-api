@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -18,8 +19,13 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => App\Http\Middleware\IsAdmin::class,
         ]);
     })
-    ->withExceptions(function (Exceptions $exceptions): void {
-        $exceptions->shouldRenderJsonWhen(
-            fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
-        );
+    ->withExceptions(function (Exceptions $exceptions) {
+        $exceptions->render(function (AuthorizationException $exception, Request $request) {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'This action is unauthorized.',
+                ], 403);
+            }
+        });
     })->create();
