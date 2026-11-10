@@ -2,10 +2,16 @@
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Artisan;
 use Laravel\Passport\Passport;
 use Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
+
+beforeEach(function () {
+    // Generate Passport client for testing database instances
+    Artisan::call('passport:client', ['--personal' => true, '--no-interaction' => true]);
+});
 
 test('user can register successfully', function () {
     /** @var TestCase $this */
