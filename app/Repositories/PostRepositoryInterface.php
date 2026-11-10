@@ -10,6 +10,6 @@ interface PostRepositoryInterface
     public function getAll(): Collection;
     public function getById(int $id): ?Post;
     public function create(array $data): Post;
-    public function update(int $id, array $data): bool;
+    public function update(array $data, int $id): bool;
     public function delete(int $id): bool;
 }
