@@ -53,13 +53,12 @@ class PostService implements PostServiceInterface
 
         DB::beginTransaction();
         try {
-            $updated = $this->postRepository->update($id, $data);
-            if (!$updated) {
-                DB::rollBack();
-                return null;
-            }
+            $this->postRepository->update($data, $id);
+
+            $updated = $this->postRepository->getById($id);
+
             DB::commit();
-            return $post;
+            return $updated;
         } catch (Exception $e) {
             DB::rollBack();
             throw $e;
