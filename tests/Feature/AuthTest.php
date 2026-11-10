@@ -103,3 +103,45 @@ test('admin user can access admin user list', function () {
             'data',
         ]);
 });
+
+test('user registration fails with invalid data', function () {
+    /** @var TestCase $this */
+
+    $response = $this->postJson('/api/register', [
+        'name' => '',
+        'email' => 'not-an-email',
+        'password' => '123', // Too short
+    ]);
+
+    $response->assertStatus(422)
+        ->assertJsonValidationErrors(['name', 'email', 'password']);
+});
+
+test('user login fails with invalid credentials', function () {
+    /** @var TestCase $this */
+
+    $response = $this->postJson('/api/login', [
+        'email' => 'wrong@example.com',
+        'password' => 'wrongpassword',
+    ]);
+
+    $response->assertStatus(401)
+        ->assertJson([
+            'success' => false,
+            'message' => 'Invalid login credentials',
+        ]);
+});
+
+test('authenticated user can logout successfully', function () {
+    /** @var TestCase $this */
+    $user = User::factory()->create();
+    Passport::actingAs($user);
+
+    $response = $this->postJson('/api/logout');
+
+    $response->assertStatus(200)
+        ->assertJson([
+            'success' => true,
+            'message' => 'Logged out successfully',
+        ]);
+});
