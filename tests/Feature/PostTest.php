@@ -132,3 +132,58 @@ test('user can delete their own post', function () {
 
     $this->assertDatabaseMissing('posts', ['id' => $post->id]);
 });
+
+test('post creation fails with missing title or content', function () {
+    /** @var TestCase $this */
+
+    $user = User::factory()->create();
+    Passport::actingAs($user);
+
+    $response = $this->postJson('/api/posts', [
+        'title' => '',
+        'content' => '',
+    ]);
+
+    $response->assertStatus(422)
+        ->assertJsonValidationErrors(['title', 'content']);
+});
+
+test('returns 404 when showing a non-existent post', function () {
+    /** @var TestCase $this */
+
+    $user = User::factory()->create();
+    Passport::actingAs($user);
+
+    $response = $this->getJson('/api/posts/99999');
+
+    $response->assertStatus(404)
+        ->assertJson([
+            'success' => false,
+            'message' => 'Post not found',
+        ]);
+});
+
+test('returns 404 when updating a non-existent post', function () {
+    /** @var TestCase $this */
+
+    $user = User::factory()->create();
+    Passport::actingAs($user);
+
+    $response = $this->putJson('/api/posts/99999', [
+        'title' => 'Updated Title',
+        'content' => 'Updated Content',
+    ]);
+
+    $response->assertStatus(404);
+});
+
+test('returns 404 when deleting a non-existent post', function () {
+    /** @var TestCase $this */
+    
+    $user = User::factory()->create();
+    Passport::actingAs($user);
+
+    $response = $this->deleteJson('/api/posts/99999');
+
+    $response->assertStatus(404);
+});
