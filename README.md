@@ -1,58 +1,122 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Laravel Passport API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A JSON API built with Laravel 13 and Laravel Passport. It provides user registration and login, bearer-token authentication, post management, and an admin-only user listing.
 
-## About Laravel
+## Requirements
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- PHP 8.3 or later
+- Composer
+- Node.js and npm
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+The default database configuration uses SQLite.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Setup
 
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+From the project directory, run the Composer setup script. It installs PHP and frontend dependencies, creates `.env` if needed, generates the application key, runs migrations, and builds the frontend assets.
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+composer run setup
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Generate Passport's encryption keys and create the personal access client used to issue API tokens:
 
-## Contributing
+```bash
+php artisan passport:keys
+php artisan passport:client --personal --name="Personal Access Client"
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Start the local server:
 
-## Code of Conduct
+```bash
+php artisan serve
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+The API is available at `http://localhost:8000/api`. Configure the database and other environment-specific settings in `.env` before running the setup script when needed.
 
-## Security Vulnerabilities
+## Authentication
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Register or log in to receive a Passport access token. Include it on protected requests as a bearer token:
 
-## License
+```http
+Authorization: Bearer <access-token>
+Accept: application/json
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+New accounts receive the `user` role. Admin access must be assigned through a trusted administrative process; there is no public role-management endpoint.
+
+## API endpoints
+
+All endpoints use the `/api` prefix. Requests and responses use JSON.
+
+### Authentication
+
+| Method | Endpoint | Access | Description |
+| --- | --- | --- | --- |
+| `POST` | `/register` | Public | Create an account and return a token |
+| `POST` | `/login` | Public | Authenticate and return a token |
+| `GET` | `/profile` | Authenticated | Return the current user's profile |
+| `POST` | `/logout` | Authenticated | Revoke the current access token |
+
+Registration requires `name`, a unique valid `email`, and a `password` of at least 8 characters. Login requires a valid `email` and `password`.
+
+Example registration request:
+
+```json
+{
+  "name": "Jane Doe",
+  "email": "jane@example.com",
+  "password": "password123"
+}
+```
+
+Successful registration returns HTTP `201`; login returns HTTP `200`. Both responses include the user and an access token under `data`.
+
+### Posts
+
+All post endpoints require authentication. Every authenticated user can list and view posts. Users can update or delete their own posts; admins can update or delete any post.
+
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| `GET` | `/posts` | List posts |
+| `POST` | `/posts` | Create a post |
+| `GET` | `/posts/{id}` | View a post |
+| `PUT`, `PATCH` | `/posts/{id}` | Update a post |
+| `DELETE` | `/posts/{id}` | Delete a post |
+
+Creating a post requires `title` (up to 255 characters) and `content`. Updates accept either or both fields.
+
+Example:
+
+```http
+POST /api/posts
+Authorization: Bearer <access-token>
+Accept: application/json
+Content-Type: application/json
+```
+
+```json
+{
+  "title": "First post",
+  "content": "Hello from the API."
+}
+```
+
+### Administration
+
+| Method | Endpoint | Access | Description |
+| --- | --- | --- | --- |
+| `GET` | `/admin/users` | Admin | List user profiles |
+
+Requests from unauthenticated users receive `401`; non-admin users attempting admin-only actions receive `403`. Invalid input returns `422`, and requests for posts that do not exist return `404`.
+
+## Tests
+
+Run the test suite with:
+
+```bash
+composer test
+```
+
+## Security
+
+Do not commit `.env`, Passport private keys, or production credentials. Keep generated keys and access tokens private.
