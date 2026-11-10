@@ -22,7 +22,7 @@ class PostRepository implements PostRepositoryInterface
         return Post::create($data);
     }
 
-    public function update(int $id, array $data): bool
+    public function update(array $data, int $id): bool
     {
         $post = Post::find($id);
         if (!$post) {
