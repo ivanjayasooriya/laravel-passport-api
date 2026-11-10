@@ -3,10 +3,16 @@
 use App\Models\Post;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Artisan;
 use Laravel\Passport\Passport;
 use Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
+
+beforeEach(function () {
+    // Generate Passport client for testing database instances
+    Artisan::call('passport:client', ['--personal' => true, '--no-interaction' => true]);
+});
 
 test('any authenticated user can list posts', function () {
     /** @var TestCase $this */
@@ -110,7 +116,7 @@ test('admin can update any users post via policy override', function () {
 
 test('user can delete their own post', function () {
     /** @var TestCase $this */
-    
+
     $user = User::factory()->create();
     $post = Post::factory()->create(['user_id' => $user->id]);
 
